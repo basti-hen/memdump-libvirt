@@ -13,4 +13,4 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(SRC src/main.cpp)
 
 add_executable(memdump-libvirt ${SRC})
-target_link_libraries(memdump-libvirt virt virt-qemu)
+target_link_libraries(memdump-libvirt virt virt-qemu stdc++fs)

@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <fstream>
 
 #include <libvirt/libvirt-qemu.h>
 
@@ -49,21 +50,16 @@ int main(int argc, char **argv) {
 
     // virDomainInfo->maxMem is in KiB
     auto ramSize = info.maxMem * 1024;
+    static constexpr const uint64_t bufSize = 1024ull * 64;
+    auto pBuffer = new char[bufSize];
 
-    char *pOutputData;
-    // working directory is `/` and path needs to be relative for some reason -> use an absolute path and prepend a .
-    static constexpr const char *pCommandFormatString = "pmemsave 0 0x%016lx .%s";
+    std::ofstream outFile{path};
 
-    // get buffer len + one byte null termination
-    auto len = static_cast<uint64_t>(std::snprintf(nullptr, 0, pCommandFormatString, ramSize, path.c_str())) + 1;
-    auto pBuffer = new char[len];
-    std::snprintf(pBuffer, len, pCommandFormatString, ramSize, path.c_str());
-    // execute monitor command
-    // NOTE: virDomainQemuMonitorCommand does not tell us if the file could not be written!
-    auto r = virDomainQemuMonitorCommand(pDomain, pBuffer, &pOutputData, VIR_DOMAIN_QEMU_MONITOR_COMMAND_HMP);
-    if (r != 0) {
-        std::fprintf(stderr, "error: %i\n", r);
-        exit(8);
+    uint64_t currentSize = 0;
+    for (uint64_t i = 0; i < ramSize; i += currentSize) {
+        currentSize = std::min(bufSize, ramSize - i);
+        virDomainMemoryPeek(pDomain, i, currentSize, pBuffer, VIR_MEMORY_PHYSICAL);
+        outFile.write(pBuffer, currentSize);
     }
 
     // cleanup
