@@ -11,7 +11,7 @@ libvirt
 ## How to get it:
 
 ```
-git clone https://github.com/trufflepig-forensics/memdump-libvirt && cd memdump-libvirt
+git clone https://github.com/basti-hen/memdump-libvirt && cd memdump-libvirt
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
